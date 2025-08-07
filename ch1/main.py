@@ -40,7 +40,7 @@ def filter_danger_logs(log_list, output_file='filter_danger_logs.log'):
                 for d_line in danger_lines:
                     f.write(', '.join(map(str, d_line)) + '\n')
 
-            print(f'위험 로그 {len(danger_lines)}개 저장 완료: {output_file}')
+            print(f'\n\n위험 로그 {len(danger_lines)}개 저장 완료: {output_file}')
         else:
             print('위험 키워드를 포함한 로그가 없습니다.')
 
