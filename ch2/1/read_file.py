@@ -3,12 +3,12 @@ import pickle
 
 
 def read_csv(path):
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, 'r', encoding='utf-8') as f:
         reader = csv.reader(f)
         header = next(reader)
         data = [row for row in reader]
 
-    print("전체 목록:")
+    print('전체 목록:')
     for row in data:
         print(row)
 
@@ -30,7 +30,7 @@ def save_bin(path, header, data):
 def open_bin(path):
     with open(path, 'rb') as f:
         loaded_header, loaded_data = pickle.load(f)
-    
+
     return loaded_header, loaded_data
 
 
@@ -43,11 +43,13 @@ def main():
         header, data = read_csv(input_file)
 
         flammability_index_col = header.index('Flammability')
-        data.sort(key=lambda row: float(row[flammability_index_col]), reverse=True)
+        data.sort(key=lambda row:
+                  float(row[flammability_index_col]), reverse=True)
 
-        danger_items = [row for row in data if float(row[flammability_index_col]) >= 0.7]
+        danger_items = [row for row in data
+                        if float(row[flammability_index_col]) >= 0.7]
 
-        print("\n인화성 지수 0.7 이상 위험 항목:")
+        print('\n인화성 지수 0.7 이상 위험 항목:')
         for row in danger_items:
             print(row)
 
@@ -56,8 +58,8 @@ def main():
         save_bin(bin_file, header, data)
 
         bin_header, bin_data = open_bin(bin_file)
-        
-        print("\nbin 파일 데이터:")
+
+        print('\nbin 파일 데이터:')
         print(bin_header)
         for row in bin_data:
             print(row)
@@ -65,8 +67,8 @@ def main():
     except FileNotFoundError as e:
         print(e)
 
-    except ValueError as e:
-        print("invalid file")
+    except ValueError:
+        print('invalid file')
 
 
 if __name__ == '__main__':
