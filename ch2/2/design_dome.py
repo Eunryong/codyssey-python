@@ -40,8 +40,8 @@ def main():
         while True:
             user_input = input(
                 'Input diameter and material(glass, aluminum, carbon_steel)'
-                     ' and thickness(default = 1.0): ')
-            
+                ' and thickness(default = 1.0): ')
+
             if user_input == 'exit':
                 break
 

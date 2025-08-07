@@ -30,8 +30,8 @@ def read_all_csv_files():
                     common_parts = parts
                 else:
                     if parts != common_parts:
-                        raise ValueError(f'{csv_files[i]}\
-                                         의 parts 열이 다른 파일과 다릅니다!')
+                        raise ValueError(f'{csv_files[i]}'
+                                         '의 parts 열이 다른 파일과 다릅니다!')
 
             strength_arrays.append(np.array(strengths).reshape(-1, 1))
 
