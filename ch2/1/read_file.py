@@ -46,8 +46,14 @@ def main():
         data.sort(key=lambda row:
                   float(row[flammability_index_col]), reverse=True)
 
+        print('\n내림차순 정렬:')
+        for row in data:
+            print(row)
+
+
         danger_items = [row for row in data
                         if float(row[flammability_index_col]) >= 0.7]
+
 
         print('\n인화성 지수 0.7 이상 위험 항목:')
         for row in danger_items:

@@ -31,18 +31,18 @@ def sphere_area(diameter, material, thickness):
 
     sphere_results.append(result)
 
-    print(f'재질 ⇒ {material}, 지름 ⇒ {diameter}, 두께 ⇒ {thickness}\
-          , 면적 ⇒ {area_rounded}, 무게 ⇒ {weight_rounded} kg')
+    print(f'재질 ⇒ {material}, 지름 ⇒ {diameter}, 두께 ⇒ {thickness}'
+          f', 면적 ⇒ {area_rounded}, 무게 ⇒ {weight_rounded} kg')
 
 
 def main():
     try:
         while True:
             user_input = input(
-                'Input diameter and material(glass, aluminum, carbon_steel)\
-                     and thickness(default = 1.0): ')
-
-            if user_input[0] == 'exit':
+                'Input diameter and material(glass, aluminum, carbon_steel)'
+                     ' and thickness(default = 1.0): ')
+            
+            if user_input == 'exit':
                 break
 
             data = user_input.strip().split()
@@ -51,6 +51,9 @@ def main():
                 raise ValueError
 
             diameter = float(data[0])
+
+            if diameter == 0:
+                raise ValueError
             material = data[1]
             thickness = 1.0
             if len(data) == 3:

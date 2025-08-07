@@ -79,10 +79,11 @@ def main():
 
         bonus_arr = read_bonus_file()
         bonus_arr = np.array(bonus_arr)
+        print(bonus_arr, "\n\n")
+        transpose_arr = bonus_arr.transpose()
 
-        bonus_arr.transpose()
+        print(transpose_arr)
 
-        print(bonus_arr)
     except Exception as e:
         print(e)
 
