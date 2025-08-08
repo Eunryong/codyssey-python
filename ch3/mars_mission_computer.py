@@ -7,8 +7,9 @@ import time
 from collections import defaultdict
 import subprocess
 import platform
-from threading import Thread
+# from threading import Thread
 import multiprocessing
+
 
 class DummySensor:
 
@@ -382,15 +383,17 @@ def main():
         #     th3.join()
         #     time.sleep(20)
 
-        
-        runComputer1 = multiprocessing.Process(target=RunComputer.get_sensor_data,daemon=True)
+        runComputer1 = multiprocessing.Process(
+            target=RunComputer.get_sensor_data, daemon=True)
 
         runComputer1.start()
         while True:
-            runComputer2 = multiprocessing.Process(target=RunComputer.get_mission_computer_info,
-                                                    daemon=True)
-            runComputer3 = multiprocessing.Process(target=RunComputer.get_mission_computer_load,
-                                                    daemon=True)
+            runComputer2 = multiprocessing.Process(
+                target=RunComputer.get_mission_computer_info,
+                daemon=True)
+            runComputer3 = multiprocessing.Process(
+                target=RunComputer.get_mission_computer_load,
+                daemon=True)
 
             runComputer2.start()
             runComputer3.start()
@@ -399,7 +402,6 @@ def main():
             runComputer3.join()
 
             time.sleep(20)
-
 
     except KeyboardInterrupt:
         # if th1.is_alive():
@@ -417,6 +419,7 @@ def main():
             runComputer3.join()
 
         print()
+
 
 if __name__ == '__main__':
     main()
