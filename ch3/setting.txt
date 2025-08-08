@@ -2,7 +2,7 @@
 operating_system=true
 os_version=true
 cpu_type=true
-cpu_cores=true
+cpu_cores=false
 memory_size_gb=false
 
 [system_load_items]

@@ -8,7 +8,7 @@ from collections import defaultdict
 import subprocess
 import platform
 from threading import Thread
-
+import multiprocessing
 
 class DummySensor:
 
@@ -16,16 +16,16 @@ class DummySensor:
         self.log_file = log_file
         self.init_logger()
         self.env_values = {
-            "mars_base_internal_temperature": random.randint(18, 30),
-            "mars_base_external_temperature": random.randint(0, 21),
-            "mars_base_internal_humidity": random.randint(50, 60),
-            "mars_base_external_illuminance": random.randint(500, 715),
-            "mars_base_internal_co2": random.uniform(0.02, 0.1),
-            "mars_base_internal_oxygen": random.randint(4, 7)
+            'mars_base_internal_temperature': random.randint(18, 30),
+            'mars_base_external_temperature': random.randint(0, 21),
+            'mars_base_internal_humidity': random.randint(50, 60),
+            'mars_base_external_illuminance': random.randint(500, 715),
+            'mars_base_internal_co2': random.uniform(0.02, 0.1),
+            'mars_base_internal_oxygen': random.randint(4, 7)
         }
 
     def init_logger(self):
-        log_dir = "logs"
+        log_dir = 'logs'
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
@@ -44,12 +44,12 @@ class DummySensor:
 
     def set_env(self):
         self.env_values = {
-            "mars_base_internal_temperature": random.randint(18, 30),
-            "mars_base_external_temperature": random.randint(0, 21),
-            "mars_base_internal_humidity": random.randint(50, 60),
-            "mars_base_external_illuminance": random.randint(500, 715),
-            "mars_base_internal_co2": random.uniform(0.02, 0.1),
-            "mars_base_internal_oxygen": random.randint(4, 7)
+            'mars_base_internal_temperature': random.randint(18, 30),
+            'mars_base_external_temperature': random.randint(0, 21),
+            'mars_base_internal_humidity': random.randint(50, 60),
+            'mars_base_external_illuminance': random.randint(500, 715),
+            'mars_base_internal_co2': random.uniform(0.02, 0.1),
+            'mars_base_internal_oxygen': random.randint(4, 7)
         }
 
     def get_env(self):
@@ -60,12 +60,12 @@ class DummySensor:
 class MissionComputer:
     def __init__(self):
         self.env_values = {
-            "mars_base_internal_temperature": None,
-            "mars_base_external_temperature": None,
-            "mars_base_internal_humidity": None,
-            "mars_base_external_illuminance": None,
-            "mars_base_internal_co2": None,
-            "mars_base_internal_oxygen": None
+            'mars_base_internal_temperature': None,
+            'mars_base_external_temperature': None,
+            'mars_base_internal_humidity': None,
+            'mars_base_external_illuminance': None,
+            'mars_base_internal_co2': None,
+            'mars_base_internal_oxygen': None
         }
 
         self.ds = DummySensor()
@@ -76,44 +76,44 @@ class MissionComputer:
 
     def load_settings(self):
         default_settings = {
-            "system_info_items": {
-                "operating_system": True,
-                "os_version": True,
-                "cpu_type": True,
-                "cpu_cores": True,
-                "memory_size_gb": True
+            'system_info_items': {
+                'operating_system': True,
+                'os_version': True,
+                'cpu_type': True,
+                'cpu_cores': True,
+                'memory_size_gb': True
             },
-            "system_load_items": {
-                "cpu_usage_percent": True,
-                "memory_usage_percent": True
+            'system_load_items': {
+                'cpu_usage_percent': True,
+                'memory_usage_percent': True
             }
         }
 
         try:
-            if not os.path.exists("setting.txt"):
+            if not os.path.exists('setting.txt'):
                 return default_settings
 
             settings = {}
             current_section = None
 
-            with open("setting.txt", "r", encoding="utf-8") as f:
+            with open('setting.txt', 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
-                    if not line or line.startswith("#"):
+                    if not line or line.startswith('#'):
                         continue
 
-                    if line.startswith("[") and line.endswith("]"):
+                    if line.startswith('[') and line.endswith(']'):
                         current_section = line[1:-1]
-                        if (current_section in ["system_info_items",
-                                                "system_load_items"]):
+                        if (current_section in ['system_info_items',
+                                                'system_load_items']):
                             settings[current_section] = {}
 
-                    elif "=" in line and current_section:
-                        key, value = line.split("=", 1)
+                    elif '=' in line and current_section:
+                        key, value = line.split('=', 1)
                         key = key.strip()
 
                         value = value.strip().lower()
-                        tmp = value in ["true", "1", "yes", "on"]
+                        tmp = value in ['true', '1', 'yes', 'on']
                         settings[current_section][key] = tmp
 
             # 기본값과 병합
@@ -128,7 +128,7 @@ class MissionComputer:
             return settings
 
         except Exception as e:
-            print(f"설정 파일 로드 중 오류 발생: {e}")
+            print(f'설정 파일 로드 중 오류 발생: {e}')
             return default_settings
 
     def filter_data_by_settings(self, data, setting_key):
@@ -146,20 +146,20 @@ class MissionComputer:
         if not self.data_history:
             return
 
-        print("\n" + "="*60)
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 5분 평균 환경 데이터")
-        print("="*60)
+        print('\n' + '='*60)
+        print(f'[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 5분 평균 환경 데이터')
+        print('='*60)
 
         averages = {}
         for key, values in self.data_history.items():
             if values:
-                if key == "mars_base_internal_co2":
+                if key == 'mars_base_internal_co2':
                     averages[key] = round(sum(values) / len(values), 3)
                 else:
                     averages[key] = round(sum(values) / len(values), 1)
 
         print(json.dumps(averages, indent=2, ensure_ascii=False))
-        print("="*60)
+        print('='*60)
 
         self.data_history.clear()
         self.last_average_time = time.time()
@@ -175,13 +175,13 @@ class MissionComputer:
                 sensor_data = self.ds.get_env()
                 self.env_values.update(sensor_data)
 
-                print("=" * 60)
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]"
-                      " 화성 기지 환경 데이터")
-                print("=" * 60)
+                print('=' * 60)
+                print(f'[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]'
+                      ' 화성 기지 환경 데이터')
+                print('=' * 60)
                 print(
                     json.dumps(self.env_values, indent=2, ensure_ascii=False))
-                print("=" * 60)
+                print('=' * 60)
 
                 self.store_data_for_average(sensor_data)
 
@@ -194,9 +194,9 @@ class MissionComputer:
                 self.ds.set_env()
 
         except KeyboardInterrupt:
-            print("\nSystem stoped...")
+            print('\nSystem stoped...')
         except Exception as e:
-            print(f"오류가 발생했습니다: {e}")
+            print(f'오류가 발생했습니다: {e}')
 
     def get_mission_computer_info(self):
         try:
@@ -204,35 +204,35 @@ class MissionComputer:
             cpu_cores = self._get_cpu_cores()
 
             system_info = {
-                "operating_system": platform.system(),
-                "os_version": platform.release(),
-                "cpu_type": platform.processor() or platform.machine(),
-                "cpu_cores": cpu_cores,
-                "memory_size_gb": memory_gb
+                'operating_system': platform.system(),
+                'os_version': platform.release(),
+                'cpu_type': platform.processor() or platform.machine(),
+                'cpu_cores': cpu_cores,
+                'memory_size_gb': memory_gb
             }
 
             filtered_info = self.filter_data_by_settings(
-                system_info, "system_info_items")
+                system_info, 'system_info_items')
 
             if filtered_info:
-                print("\n" + "="*60)
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]"
-                      " 미션 컴퓨터 시스템 정보")
-                print("="*60)
+                print('\n' + '='*60)
+                print(f'[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]'
+                      ' 미션 컴퓨터 시스템 정보')
+                print('='*60)
                 print(json.dumps(filtered_info, indent=2, ensure_ascii=False))
-                print("="*60)
+                print('='*60)
 
             return filtered_info
 
         except Exception as e:
-            print(f"시스템 정보를 가져오는 중 오류 발생: {e}")
+            print(f'시스템 정보를 가져오는 중 오류 발생: {e}')
             return None
 
     def _get_memory_info(self):
         try:
             system = platform.system()
 
-            if system == "Windows":
+            if system == 'Windows':
                 # Windows에서 메모리 정보 가져오기
                 result = subprocess.run(
                     ['wmic', 'computersystem', 'get', 'TotalPhysicalMemory'],
@@ -244,7 +244,7 @@ class MissionComputer:
                             memory_bytes = int(line.strip())
                             return round(memory_bytes / (1024**3), 2)
 
-            elif system == "Linux":
+            elif system == 'Linux':
                 # Linux에서 /proc/meminfo 읽기
                 with open('/proc/meminfo', 'r') as f:
                     for line in f:
@@ -252,23 +252,23 @@ class MissionComputer:
                             memory_kb = int(line.split()[1])
                             return round(memory_kb / (1024**2), 2)
 
-            elif system == "Darwin":  # macOS
+            elif system == 'Darwin':  # macOS
                 result = subprocess.run(['sysctl', 'hw.memsize'],
                                         capture_output=True, text=True)
                 if result.returncode == 0:
                     memory_bytes = int(result.stdout.split(':')[1].strip())
                     return round(memory_bytes / (1024**3), 2)
 
-            return "정보 없음"
+            return '정보 없음'
 
         except Exception:
-            return "정보 없음"
+            return '정보 없음'
 
     def _get_cpu_cores(self):
         try:
-            return os.cpu_count() or "정보 없음"
+            return os.cpu_count() or '정보 없음'
         except Exception:
-            return "정보 없음"
+            return '정보 없음'
 
     def get_mission_computer_load(self):
         try:
@@ -276,47 +276,47 @@ class MissionComputer:
             memory_usage = self._get_memory_usage()
 
             load_info = {
-                "cpu_usage_percent": cpu_usage,
-                "memory_usage_percent": memory_usage,
-                "load_info": "표준 라이브러리 기반 측정"
+                'cpu_usage_percent': cpu_usage,
+                'memory_usage_percent': memory_usage,
+                'load_info': '표준 라이브러리 기반 측정'
             }
 
             filtered_load = self.filter_data_by_settings(load_info,
-                                                         "system_load_items")
+                                                         'system_load_items')
 
             if filtered_load:
-                print("\n" + "="*60)
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]"
-                      " 미션 컴퓨터 실시간 부하")
-                print("="*60)
+                print('\n' + '='*60)
+                print(f'[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]'
+                      ' 미션 컴퓨터 실시간 부하')
+                print('='*60)
                 print(json.dumps(filtered_load, indent=2, ensure_ascii=False))
-                print("="*60)
+                print('='*60)
 
             return filtered_load
 
         except Exception as e:
-            print(f"시스템 부하 정보를 가져오는 중 오류 발생: {e}")
+            print(f'시스템 부하 정보를 가져오는 중 오류 발생: {e}')
             return None
 
     def _get_cpu_usage(self):
         try:
             system = platform.system()
 
-            if system == "Windows":
+            if system == 'Windows':
                 result = subprocess.run(
                     ['wmic', 'cpu', 'get', 'loadpercentage', '/value'],
                     capture_output=True, text=True)
                 if result.returncode == 0:
                     for line in result.stdout.split('\n'):
                         if 'LoadPercentage' in line and '=' in line:
-                            return f"{line.split('=')[1].strip()}%"
+                            return f'{line.split('=')[1].strip()}%'
 
-            elif system == "Linux":
+            elif system == 'Linux':
                 with open('/proc/loadavg', 'r') as f:
                     load = f.read().split()[0]
-                    return f"Load Average: {load}"
+                    return f'Load Average: {load}'
 
-            elif system == "Darwin":  # macOS
+            elif system == 'Darwin':  # macOS
                 result = subprocess.run(['top', '-l', '1', '-n', '0'],
                                         capture_output=True, text=True)
                 if result.returncode == 0:
@@ -324,16 +324,16 @@ class MissionComputer:
                         if 'CPU usage' in line:
                             return line.split(':')[1].strip()
 
-            return "측정 불가"
+            return '측정 불가'
 
         except Exception:
-            return "측정 불가"
+            return '측정 불가'
 
     def _get_memory_usage(self):
         try:
             system = platform.system()
 
-            if system == "Linux":
+            if system == 'Linux':
                 with open('/proc/meminfo', 'r') as f:
                     meminfo = {}
                     for line in f:
@@ -345,12 +345,12 @@ class MissionComputer:
                     available = meminfo.get('MemAvailable', 0)
                     if total > 0:
                         used_percent = ((total - available) / total) * 100
-                        return f"{used_percent:.1f}%"
+                        return f'{used_percent:.1f}%'
 
-            return "측정 불가"
+            return '측정 불가'
 
         except Exception:
-            return "측정 불가"
+            return '측정 불가'
 
 
 def main():
@@ -358,39 +358,65 @@ def main():
         ds = DummySensor()
 
         env_values = ds.get_env()
-        print(env_values, "\n")
+        print(env_values, '\n')
 
         ds.set_env()
 
-        print(ds.get_env(), "\n")
+        print(ds.get_env(), '\n')
 
         RunComputer = MissionComputer()
 
-        th1 = Thread(target=RunComputer.get_sensor_data, daemon=True)
+        # th1 = Thread(target=RunComputer.get_sensor_data, daemon=True)
 
-        th1.start()
+        # th1.start()
+        # while True:
+        #     th2 = Thread(target=RunComputer.get_mission_computer_info,
+        #                  daemon=True)
+        #     th3 = Thread(target=RunComputer.get_mission_computer_load,
+        #                  daemon=True)
+
+        #     th2.start()
+        #     th3.start()
+
+        #     th2.join()
+        #     th3.join()
+        #     time.sleep(20)
+
+        
+        runComputer1 = multiprocessing.Process(target=RunComputer.get_sensor_data,daemon=True)
+
+        runComputer1.start()
         while True:
-            th2 = Thread(target=RunComputer.get_mission_computer_info,
-                         daemon=True)
-            th3 = Thread(target=RunComputer.get_mission_computer_load,
-                         daemon=True)
+            runComputer2 = multiprocessing.Process(target=RunComputer.get_mission_computer_info,
+                                                    daemon=True)
+            runComputer3 = multiprocessing.Process(target=RunComputer.get_mission_computer_load,
+                                                    daemon=True)
 
-            th2.start()
-            th3.start()
+            runComputer2.start()
+            runComputer3.start()
 
-            th2.join()
-            th3.join()
-            time.sleep(5)
+            runComputer2.join()
+            runComputer3.join()
+
+            time.sleep(20)
+
 
     except KeyboardInterrupt:
-        if th1.is_alive():
-            th1.join(timeout=1)
-        if th2.is_alive():
-            th2.join(timeout=1)
-        if th3.is_alive():
-            th3.join(timeout=1)
-        print()
+        # if th1.is_alive():
+        #     th1.join(timeout=1)
+        # if th2.is_alive():
+        #     th2.join(timeout=1)
+        # if th3.is_alive():
+        #     th3.join(timeout=1)
 
+        if runComputer1.is_alive():
+            runComputer1.join()
+        if runComputer2.is_alive():
+            runComputer2.join()
+        if runComputer3.is_alive():
+            runComputer3.join()
+
+        print()
 
 if __name__ == '__main__':
     main()
