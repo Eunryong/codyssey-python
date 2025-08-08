@@ -1,0 +1,10 @@
+[system_info_items]
+operating_system=true
+os_version=true
+cpu_type=true
+cpu_cores=true
+memory_size_gb=false
+
+[system_load_items]
+cpu_usage_percent=true
+memory_usage_percent=true
