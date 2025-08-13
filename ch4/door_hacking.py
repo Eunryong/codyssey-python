@@ -97,25 +97,19 @@ def unlock_zip(zip_file):
                         password_found = True
                         print(f"패스워드 발견: {result}")
                         
-                        # 파일 저장
                         try:
-                            file_exists = os.path.exists('setting.txt')
-                            
-                            with open('setting.txt', 'w', encoding='utf-8') as f:
-                                f.write("=" * 50 + "\n")
-                                f.write("ZIP 패스워드 크래킹 결과\n")
-                                f.write("=" * 50 + "\n")
-                                f.write(f"발견된 패스워드: {result}\n")
-                                f.write(f"대상 파일: {zip_file}\n")
-                                f.write(f"발견 시간: {time.ctime()}\n")
-                                f.write(f"소요 시간: {time.time() - start_time:.2f}초\n")
-                                f.write(f"사용된 프로세스: {num_processes}개\n")
-                                f.write("=" * 50 + "\n")
-                            
+                            file_exists = os.path.exists('password.txt')
+                            print(result)
+                            with zipfile.ZipFile(zip_file, 'r') as new_zip_ref:
+                                with new_zip_ref.open(smallest_info.filename, pwd=result_password.encode()) as zf:
+                                    with open('password.txt', 'w', encoding='utf-8') as f:
+                                        tmp = zf.read().decode('utf-8')
+                                        f.write(tmp)
+
                             if file_exists:
-                                print("결과가 setting.txt에 업데이트되었습니다.")
+                                print("결과가 password.txt에 업데이트되었습니다.")
                             else:
-                                print("setting.txt 파일을 새로 생성하여 결과를 저장했습니다.")
+                                print("password.txt 파일을 새로 생성하여 결과를 저장했습니다.")
                                 
                         except Exception as e:
                             print(f"파일 저장 오류: {e}")
@@ -138,10 +132,10 @@ def unlock_zip(zip_file):
                                 print(f"패스워드 발견: {final_result}")
                                 
                                 try:
-                                    with open('setting.txt', 'w', encoding='utf-8') as f:
+                                    with open('password.txt', 'w', encoding='utf-8') as f:
                                         f.write(f"발견된 패스워드: {final_result}\n")
                                         f.write(f"발견 시간: {time.ctime()}\n")
-                                    print("✅ 결과가 setting.txt에 저장되었습니다.")
+                                    print("결과가 password.txt에 저장되었습니다.")
                                 except Exception as e:
                                     print(f"파일 저장 오류: {e}")
                                 break
