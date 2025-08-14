@@ -17,7 +17,8 @@ def caesar_cipher_decode(target_text):
                     shifted_code = (char_code + position_shift) % 26
 
                     decoded_char = chr(shifted_code + ord("a"))
-                    decoded_str += decoded_char.upper() if is_upper else decoded_char
+                    decoded_str += (decoded_char.upper()
+                                    if is_upper else decoded_char)
                 else:
                     decoded_str += char
 

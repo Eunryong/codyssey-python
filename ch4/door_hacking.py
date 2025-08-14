@@ -66,7 +66,8 @@ def unlock_zip(zip_file):
 
     num_processes = os.cpu_count()
     print(f"사용 프로세스 수: {num_processes}")
-    print(f"테스트 파일: {smallest_info.filename}" f"({smallest_info.file_size} bytes)")
+    print(f"테스트 파일: {smallest_info.filename}"
+          f"({smallest_info.file_size} bytes)")
 
     manager = mp.Manager()
     result_queue = manager.Queue()
@@ -118,7 +119,8 @@ def unlock_zip(zip_file):
                             print(result)
                             with zipfile.ZipFile(zip_file, "r") as new_zip_ref:
                                 with new_zip_ref.open(
-                                    smallest_info.filename, pwd=result_password.encode()
+                                    smallest_info.filename,
+                                    pwd=result_password.encode()
                                 ) as zf:
                                     with open(
                                         "password.txt", "w", encoding="utf-8"
@@ -163,7 +165,7 @@ def unlock_zip(zip_file):
                                 except Exception as e:
                                     print(f"파일 저장 오류: {e}")
                                 break
-                        except:
+                        except Exception:
                             pass
 
                         if not password_found:
