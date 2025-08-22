@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QGridLayout
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QFontMetrics
 
 class Calculator:
 
@@ -57,7 +57,9 @@ class Calculator:
                 i += 1
         
         if len(self.operators) == 0:
-            return self.values[0]
+            result = self.values[0]
+            self.values.clear()
+            return result
 
     @staticmethod
     def add(a, b):
@@ -92,11 +94,12 @@ class App(QWidget):
         self.input = ""
         self.current_input = "0"
         self.calculator = Calculator()
+        self.base_font_size = 24  # 기본 폰트 크기
         self.initUI()
         
     def initUI(self):
         self.setWindowTitle('계산기')
-        self.setGeometry(300, 300, 300, 400)
+        self.setGeometry(300, 300, 400, 550)
         self.setStyleSheet("""
             QWidget {
                 background-color: #2b2b2b;
@@ -106,9 +109,9 @@ class App(QWidget):
                 background-color: #404040;
                 border: 1px solid #555;
                 border-radius: 5px;
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: bold;
-                padding: 10px;
+                padding: 15px;
             }
             QPushButton:hover {
                 background-color: #505050;
@@ -126,9 +129,8 @@ class App(QWidget):
                 background-color: #1a1a1a;
                 border: 2px solid #555;
                 border-radius: 5px;
-                font-size: 24px;
                 font-weight: bold;
-                padding: 15px;
+                padding: 20px;
                 text-align: right;
             }
         """)
@@ -141,6 +143,8 @@ class App(QWidget):
         self.display.setReadOnly(True)
         self.display.setText(self.current_input)
         self.display.setAlignment(Qt.AlignRight)
+        # 초기 폰트 크기 설정
+        self.adjust_font_size(self.current_input)
         main_layout.addWidget(self.display)
         
         # 버튼 그리드 레이아웃
@@ -178,6 +182,41 @@ class App(QWidget):
         main_layout.addLayout(grid_layout)
         self.setLayout(main_layout)
         
+    def format_number(self, number):
+        """숫자를 소수점 6자리로 반올림하고 불필요한 0 제거"""
+        if isinstance(number, float):
+            # 소수점 6자리로 반올림
+            rounded = round(number, 6)
+            # 정수인 경우 정수로 반환
+            if rounded == int(rounded):
+                return str(int(rounded))
+            else:
+                # 소수점 이하 불필요한 0 제거
+                return f"{rounded:.6f}".rstrip('0').rstrip('.')
+        return str(number)
+    
+    def adjust_font_size(self, text):
+        """텍스트 길이에 따라 폰트 크기 자동 조정"""
+        display_width = self.display.width() - 30  # 패딩 고려
+        
+        # 다양한 폰트 크기 시도 (24부터 12까지)
+        for font_size in range(self.base_font_size, 11, -1):
+            font = QFont()
+            font.setPointSize(font_size)
+            font.setBold(True)
+            
+            font_metrics = QFontMetrics(font)
+            text_width = font_metrics.horizontalAdvance(text)
+            
+            if text_width <= display_width or font_size == 12:
+                self.display.setFont(font)
+                break
+    
+    def update_display(self, text):
+        """디스플레이 업데이트 및 폰트 크기 조정"""
+        self.display.setText(text)
+        self.adjust_font_size(text)
+        
     def button_clicked(self, text):
         if text.isdigit() or text == '.':
             self.number_clicked(text)
@@ -191,7 +230,7 @@ class App(QWidget):
             self.plus_minus_clicked()
         elif text == '%':
             self.percent_clicked()
-        self.display.setText(self.input)
+        self.update_display(self.input)
     
     def number_clicked(self, number):
         if number == '.':
@@ -199,8 +238,8 @@ class App(QWidget):
                 self.current_input = '0.'
                 self.input += self.current_input
             else:
-                self.current_input += '' if number in self.current_input else number
                 self.input += '' if number in self.current_input else number
+                self.current_input += '' if number in self.current_input else number
         else:
             if self.current_input == '0':
                 self.current_input = number
@@ -230,13 +269,17 @@ class App(QWidget):
             self.calculator.push_value(float(self.current_input))
             result = self.calculator.equal()
             
-            if result == int(result):
-                result = int(result)
+            # 결과를 포맷팅 (소수점 6자리 반올림)
+            formatted_result = self.format_number(result)
             
-            self.input = str(result)
-            
+            self.input = formatted_result
+            self.current_input = formatted_result
         except ZeroDivisionError:
-            self.display.setText("0")
+            self.update_display("오류")
+            self.calculator.reset()
+            self.clear()
+        except:
+            self.update_display("오류")
             self.calculator.reset()
             self.clear()
     
@@ -246,30 +289,34 @@ class App(QWidget):
     def clear(self):
         self.calculator.reset()
         self.current_input = '0'
-        self.display.setText(self.current_input)
         self.input = "0"
+        self.update_display(self.current_input)
 
     
     def plus_minus_clicked(self):
         if self.current_input and self.current_input != "0":
             value = float(self.current_input)
-            if value == int(value):
-                value = int(value)
             result = self.calculator.negative_positive(value)
+            
+            # 결과를 포맷팅
+            formatted_result = self.format_number(result)
+            
             original_length = len(self.current_input)
-            self.current_input = str(result)
+            self.current_input = formatted_result
             self.input = self.input[:-original_length] + self.current_input
     
     def percent_clicked(self):
+        if self.current_input == '':
+            return
         value = float(self.current_input)
         original_length = len(self.current_input)
 
         result = self.calculator.percent(value)
-        if result == int(result):
-            result = int(result)
-            
-        self.current_input = str(result)
         
+        # 결과를 포맷팅
+        formatted_result = self.format_number(result)
+        
+        self.current_input = formatted_result
         self.input = self.input[:-original_length] + self.current_input
         
 
