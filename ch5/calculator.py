@@ -36,9 +36,9 @@ class Calculator:
         while i < len(self.operators):
             if self.operators[i] in ['×', '÷']:
                 if self.operators[i] == '×':
-                    self.values[i] = self.multiply(self.values[i] * self.values[i + 1])
+                    self.values[i] = self.multiply(self.values[i], self.values[i + 1])
                 elif self.operators[i] == '÷':
-                    self.values[i] = self.divide(self.values[i] / self.values[i + 1])
+                    self.values[i] = self.divide(self.values[i], self.values[i + 1])
                 self.values.pop(i + 1)
                 self.operators.pop(i)
             else:
@@ -48,9 +48,9 @@ class Calculator:
         while i < len(self.operators):
             if self.operators[i] in ['+', '-']:
                 if self.operators[i] == '+':
-                    self.values[i] = self.add(self.values[i] * self.values[i + 1])
+                    self.values[i] = self.add(self.values[i], self.values[i + 1])
                 elif self.operators[i] == '-':
-                    self.values[i] = self.subtract(self.values[i] / self.values[i + 1])
+                    self.values[i] = self.subtract(self.values[i], self.values[i + 1])
                 self.values.pop(i + 1)
                 self.operators.pop(i)
             else:
@@ -202,11 +202,15 @@ class App(QWidget):
                 self.current_input += '' if number in self.current_input else number
                 self.input += '' if number in self.current_input else number
         else:
-            if self.calculator.compare_value_operator():
+            if self.current_input == '0':
                 self.current_input = number
             else:
                 self.current_input += number
-            self.input += number
+            
+            if self.input == '0':
+                self.input = number
+            else:
+                self.input += number
     
     def operator_clicked(self, op):
         if self.current_input:
@@ -229,9 +233,7 @@ class App(QWidget):
             if result == int(result):
                 result = int(result)
             
-            self.display.setText(str(result))
-            self.operator = ""
-
+            self.input = str(result)
             
         except ZeroDivisionError:
             self.display.setText("0")
@@ -249,18 +251,27 @@ class App(QWidget):
 
     
     def plus_minus_clicked(self):
-        if self.current_input != "0" and len(self.current_input) != 0:
+        if self.current_input and self.current_input != "0":
             value = float(self.current_input)
-            self.calculator.negative_positive(value)
-            self.input = self.input[:len(self.current_input) * -1] + '-' + self.current_input
-            self.display.setText(self.input)
+            if value == int(value):
+                value = int(value)
+            result = self.calculator.negative_positive(value)
+            original_length = len(self.current_input)
+            self.current_input = str(result)
+            self.input = self.input[:-original_length] + self.current_input
     
     def percent_clicked(self):
-        self.calculator.percent()
-        value = self.calculator.get_value()
-        if value == int(value):
-            value = int(value)
-        self.display.setText(str(value))
+        value = float(self.current_input)
+        original_length = len(self.current_input)
+
+        result = self.calculator.percent(value)
+        if result == int(result):
+            result = int(result)
+            
+        self.current_input = str(result)
+        
+        self.input = self.input[:-original_length] + self.current_input
+        
 
 def main():
     app = QApplication(sys.argv)
