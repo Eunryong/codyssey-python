@@ -4,7 +4,6 @@ import multiprocessing as mp
 import time
 import os
 
-
 def index_to_password(index, charset, length):
     base = len(charset)
     result = []
@@ -59,7 +58,7 @@ def worker_process(
 
 def unlock_zip(zip_file):
     charset = string.ascii_lowercase + string.digits
-
+    
     result_password = None
     with zipfile.ZipFile(zip_file, "r") as zip_ref:
         smallest_info = min(zip_ref.filelist, key=lambda x: x.file_size)

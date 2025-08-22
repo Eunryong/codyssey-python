@@ -39,7 +39,7 @@ def caesar_cipher_decode(target_text):
             raise ValueError
 
         with open("result.txt", "w", encoding="utf-8") as f:
-            print(result)
+            
             f.write(result[number])
 
     except ValueError:
