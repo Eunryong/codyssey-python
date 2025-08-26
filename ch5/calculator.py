@@ -1,84 +1,40 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QGridLayout
+
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout,
+                             QPushButton, QLineEdit, QGridLayout)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QFontMetrics
+
 
 class Calculator:
 
     def __init__(self):
-        self.values = []
-        self.operators = []
-
-    def push_value(self, value):
-        self.values.append(value)
-
-    def push_operator(self, operator):
-        self.operators.append(operator)
-
-    def change_operator(self, operator):
-        if len(self.operators) == 0:
-            return
-        self.operators[-1] = operator
-
-    def compare_value_operator(self):
-        return len(self.values) != 0 and len(self.values) == len(self.operators)
+        self.expression = ""
 
     def reset(self):
-        self.values.clear()
-        self.operators.clear()
+        self.expression = ""
         return 0
 
-    def equal(self):
-        i = 0
-        if self.compare_value_operator():
-            self.operators.pop()
-
-        while i < len(self.operators):
-            if self.operators[i] in ['×', '÷']:
-                if self.operators[i] == '×':
-                    self.values[i] = self.multiply(self.values[i], self.values[i + 1])
-                elif self.operators[i] == '÷':
-                    self.values[i] = self.divide(self.values[i], self.values[i + 1])
-                self.values.pop(i + 1)
-                self.operators.pop(i)
-            else:
-                i += 1
-
-        i = 0
-        while i < len(self.operators):
-            if self.operators[i] in ['+', '-']:
-                if self.operators[i] == '+':
-                    self.values[i] = self.add(self.values[i], self.values[i + 1])
-                elif self.operators[i] == '-':
-                    self.values[i] = self.subtract(self.values[i], self.values[i + 1])
-                self.values.pop(i + 1)
-                self.operators.pop(i)
-            else:
-                i += 1
-        
-        if len(self.operators) == 0:
-            result = self.values[0]
-            self.values.clear()
-            return result
-
-    @staticmethod
-    def add(a, b):
-        return a + b
-
-    @staticmethod
-    def subtract(a, b):
-        return a - b
-
-    @staticmethod
-    def multiply(a, b):
-        return a * b
-
-    @staticmethod
-    def divide(a, b):
+    def evaluate(self, expr):
+        """수식을 eval로 계산"""
         try:
-            return a / b
+            # 연산자 기호 변환
+            expr = expr.replace('×', '*').replace('÷', '/')
+            
+            # 마지막 문자가 연산자면 제거
+            if expr and expr[-1] in '+-*/':
+                expr = expr[:-1]
+            
+            # 빈 문자열이면 0 반환
+            if not expr:
+                return 0
+                
+            result = eval(expr)
+            return result
         except ZeroDivisionError:
-            print("Zero Division Error")
+            raise ZeroDivisionError("Zero Division Error")
+        except Exception:
+            return 0
 
     @staticmethod
     def negative_positive(a):
@@ -87,14 +43,16 @@ class Calculator:
     @staticmethod
     def percent(a):
         return a / 100
-    
+
+
 class App(QWidget):
     def __init__(self):
         super().__init__()
-        self.input = ""
-        self.current_input = "0"
+        self.expression = "0"  # 현재 수식
+        self.current_input = ""  # 현재 입력 중인 숫자
         self.calculator = Calculator()
         self.base_font_size = 24  # 기본 폰트 크기
+        self.just_evaluated = False  # = 버튼을 방금 눌렀는지 확인
         self.initUI()
         
     def initUI(self):
@@ -141,10 +99,10 @@ class App(QWidget):
         # 디스플레이
         self.display = QLineEdit()
         self.display.setReadOnly(True)
-        self.display.setText(self.current_input)
+        self.display.setText(self.expression)
         self.display.setAlignment(Qt.AlignRight)
         # 초기 폰트 크기 설정
-        self.adjust_font_size(self.current_input)
+        self.adjust_font_size(self.expression)
         main_layout.addWidget(self.display)
         
         # 버튼 그리드 레이아웃
@@ -152,17 +110,23 @@ class App(QWidget):
         
         # 버튼 정의
         buttons = [
-            ('C', 0, 0, 1, 1), ('±', 0, 1, 1, 1), ('%', 0, 2, 1, 1), ('÷', 0, 3, 1, 1),
-            ('7', 1, 0, 1, 1), ('8', 1, 1, 1, 1), ('9', 1, 2, 1, 1), ('×', 1, 3, 1, 1),
-            ('4', 2, 0, 1, 1), ('5', 2, 1, 1, 1), ('6', 2, 2, 1, 1), ('-', 2, 3, 1, 1),
-            ('1', 3, 0, 1, 1), ('2', 3, 1, 1, 1), ('3', 3, 2, 1, 1), ('+', 3, 3, 1, 1),
-            ('0', 4, 0, 1, 2), ('.', 4, 2, 1, 1), ('=', 4, 3, 1, 1)
+            ('C', 0, 0, 1, 1), ('±', 0, 1, 1, 1),
+            ('%', 0, 2, 1, 1), ('÷', 0, 3, 1, 1),
+            ('7', 1, 0, 1, 1), ('8', 1, 1, 1, 1),
+            ('9', 1, 2, 1, 1), ('×', 1, 3, 1, 1),
+            ('4', 2, 0, 1, 1), ('5', 2, 1, 1, 1),
+            ('6', 2, 2, 1, 1), ('-', 2, 3, 1, 1),
+            ('1', 3, 0, 1, 1), ('2', 3, 1, 1, 1),
+            ('3', 3, 2, 1, 1), ('+', 3, 3, 1, 1),
+            ('0', 4, 0, 1, 2), ('.', 4, 2, 1, 1),
+            ('=', 4, 3, 1, 1)
         ]
         
         # 버튼 생성 및 배치
         for text, row, col, rowspan, colspan in buttons:
             button = QPushButton(text)
-            button.clicked.connect(lambda checked, t=text: self.button_clicked(t))
+            button.clicked.connect(
+                lambda checked, t=text: self.button_clicked(t))
             
             # 연산자 버튼 스타일 적용
             if text in ['÷', '×', '-', '+', '=']:
@@ -230,57 +194,81 @@ class App(QWidget):
             self.plus_minus_clicked()
         elif text == '%':
             self.percent_clicked()
-        self.update_display(self.input)
+        self.update_display(self.expression)
     
     def number_clicked(self, number):
+        # = 버튼 직후 새 숫자 입력시 초기화
+        if self.just_evaluated:
+            self.expression = ""
+            self.current_input = ""
+            self.just_evaluated = False
+        
         if number == '.':
             if self.current_input == '':
                 self.current_input = '0.'
-                self.input += self.current_input
-            else:
-                self.input += '' if number in self.current_input else number
-                self.current_input += '' if number in self.current_input else number
+                if self.expression == "0" or self.expression == "":
+                    self.expression = "0."
+                else:
+                    self.expression += '0.'
+            elif '.' not in self.current_input:
+                self.current_input += number
+                self.expression += number
         else:
-            if self.current_input == '0':
+            if self.expression == "0":
+                self.expression = number
                 self.current_input = number
+            elif self.current_input == "0":
+                # 현재 입력이 0이면 교체
+                self.current_input = number
+                # expression에서 마지막 0을 교체
+                expr_len = len(self.expression)
+                if expr_len > 0 and self.expression[-1] == '0':
+                    self.expression = self.expression[:-1] + number
+                else:
+                    self.expression += number
             else:
                 self.current_input += number
-            
-            if self.input == '0':
-                self.input = number
-            else:
-                self.input += number
+                self.expression += number
     
     def operator_clicked(self, op):
-        if self.current_input:
-            self.calculator.push_value(float(self.current_input))
-            self.current_input = ''
-
-        if self.calculator.compare_value_operator():
-            self.calculator.change_operator(op)
-            self.input = self.input[:-1] + op
+        # = 버튼 직후 연산자 입력시 결과를 기반으로 계속
+        if self.just_evaluated:
+            self.just_evaluated = False
+        
+        # 표현식이 비어있거나 0이면 0을 기반으로 시작
+        if self.expression == "" or self.expression == "0":
+            self.expression = "0" + op
+        # 이미 연산자로 끝나면 교체
+        elif self.expression[-1] in '÷×-+':
+            self.expression = self.expression[:-1] + op
         else:
-            self.calculator.push_operator(op)
-            self.input += op
+            self.expression += op
+        
+        self.current_input = ''
 
     
     def equals_clicked(self):
         try:
-            self.calculator.push_value(float(self.current_input))
-            result = self.calculator.equal()
+            # 빈 표현식이면 현재 입력값 사용
+            if not self.expression and self.current_input:
+                self.expression = self.current_input
             
-            # 결과를 포맷팅 (소수점 6자리 반올림)
-            formatted_result = self.format_number(result)
+            # 연산자로 끝나면 제거
+            if self.expression and self.expression[-1] in "÷×-+":
+                self.expression = self.expression[:-1]
             
-            self.input = formatted_result
-            self.current_input = formatted_result
+            # 표현식 평가
+            if self.expression and self.expression != "":
+                result = self.calculator.evaluate(self.expression)
+                formatted_result = self.format_number(result)
+                self.expression = formatted_result
+                self.current_input = formatted_result
+                self.just_evaluated = True
         except ZeroDivisionError:
             self.update_display("오류")
-            self.calculator.reset()
             self.clear()
-        except:
+        except Exception as e:
             self.update_display("오류")
-            self.calculator.reset()
             self.clear()
     
     def clear_clicked(self):
@@ -288,36 +276,34 @@ class App(QWidget):
     
     def clear(self):
         self.calculator.reset()
-        self.current_input = '0'
-        self.input = "0"
-        self.update_display(self.current_input)
+        self.current_input = ''
+        self.expression = "0"
+        self.just_evaluated = False
+        self.update_display(self.expression)
 
     
     def plus_minus_clicked(self):
         if self.current_input and self.current_input != "0":
-            value = float(self.current_input)
-            result = self.calculator.negative_positive(value)
-            
-            # 결과를 포맷팅
-            formatted_result = self.format_number(result)
-            
-            original_length = len(self.current_input)
-            self.current_input = formatted_result
-            self.input = self.input[:-original_length] + self.current_input
+            if self.current_input.startswith('-'):
+                self.current_input = self.current_input[1:]
+                # 표현식에서도 - 제거
+                if self.expression.startswith('(-'):
+                    end_paren = self.expression.endswith(')')
+                    self.expression = (self.expression[2:-1]
+                                       if end_paren
+                                       else self.expression[1:])
+            else:
+                self.current_input = '-' + self.current_input
+                # 표현식에 - 추가
+                self.expression = '(-' + self.expression + ')'
     
     def percent_clicked(self):
-        if self.current_input == '':
-            return
-        value = float(self.current_input)
-        original_length = len(self.current_input)
-
-        result = self.calculator.percent(value)
-        
-        # 결과를 포맷팅
-        formatted_result = self.format_number(result)
-        
-        self.current_input = formatted_result
-        self.input = self.input[:-original_length] + self.current_input
+        if self.just_evaluated:
+            self.just_evaluated = False
+            
+        if self.expression and self.expression[-1] not in "+×÷-(":
+            self.expression = "(" + self.expression + ")/100"
+            self.current_input = ''
         
 
 def main():
