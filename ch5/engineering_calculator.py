@@ -403,16 +403,18 @@ class EngineeringApp(QWidget):
         # 수식 정리
         expr = expr.replace('×', '*').replace('÷', '/').replace('^', '**')
         
+        expr = re.sub(r'³√\((.*?)\)', r'(\1)**(1/3)', expr)
+
         # π와 e를 임시 마커로 치환
         expr = expr.replace('π', '__PI__')
-        expr = expr.replace('e', '__E__')
         
-        # 과학적 표기법 처리 (E를 e로)
-        expr = expr.replace('E', 'e')
+        expr = re.sub(r'\bE\b', '__BIG_E__', expr)      # 단독 E만  
+        expr = re.sub(r'\be\b', '__SMALL_E__', expr)    # 단독 e만
         
         # 마커를 실제 값으로 치환
         expr = expr.replace('__PI__', str(math.pi))
-        expr = expr.replace('__E__', str(math.e))
+        expr = expr.replace('__BIG_E__', str(math.e))  
+        expr = expr.replace('__SMALL_E__', str(math.e))
         
         expr = expr.replace('²', '**2').replace('³', '**3')
         
