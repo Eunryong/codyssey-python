@@ -627,10 +627,15 @@ class EngineeringApp(QWidget):
         
         # 함수가 대기 중이면 괄호만 열고 숫자는 입력하지 않음
         if self.pending_function:
-            self.expression += self.pending_function + "("
-            self.pending_function = None
-            self.current_input = ""
-            return  # 숫자 입력 차단
+            if self.pending_function == '√':
+                # nth_root의 경우 괄호 없이 숫자 입력 허용
+                self.pending_function = None
+                # 숫자 입력을 계속 진행
+            else:
+                self.expression += self.pending_function + "("
+                self.pending_function = None
+                self.current_input = ""
+                return  # 숫자 입력 차단
         
         # 괄호 ')' 다음에 숫자가 바로 입력되지 않도록 차단
         if (self.expression and 
@@ -883,9 +888,16 @@ class EngineeringApp(QWidget):
             self.pending_function = '³√'
     
     def nth_root_clicked(self):
-        if self.current_input:
-            self.expression += "√"
+        if self.just_evaluated:
+            self.just_evaluated = False
+            
+        if self.expression and self.expression[-1] not in "+-×÷^(":
+            # 현재 표현식을 n제곱근의 n 부분으로 사용
+            self.expression = self.expression + "√"
             self.current_input = ''
+        else:
+            # 새로 입력을 시작하는 경우 대기 모드로 설정
+            self.pending_function = '√'
     
     def reciprocal_clicked(self):
         if self.just_evaluated:
