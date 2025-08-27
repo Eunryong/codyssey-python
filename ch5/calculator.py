@@ -37,6 +37,23 @@ class Calculator:
             return 0
 
     @staticmethod
+    def add(a, b):
+        return a + b
+    
+    @staticmethod
+    def subtract(a, b):
+        return a - b
+    
+    @staticmethod
+    def multiply(a, b):
+        return a * b
+    
+    @staticmethod
+    def divide(a, b):
+        return a / b
+    
+
+    @staticmethod
     def negative_positive(a):
         return a * -1
     
@@ -179,7 +196,7 @@ class App(QWidget):
     def update_display(self, text):
         """디스플레이 업데이트 및 폰트 크기 조정"""
         self.display.setText(text)
-        self.adjust_font_size(text)
+        self.adjust_font_size(text) 
         
     def button_clicked(self, text):
         if text.isdigit() or text == '.':
