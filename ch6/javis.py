@@ -227,10 +227,10 @@ class AudioRecorder:
 
             # 무한루프 방지
             if actual_duration <= 0:
-                print(f'❌ actual_duration이 {actual_duration}이므로 중단합니다.')
+                print(f'actual_duration이 {actual_duration}이므로 중단합니다.')
                 break
 
-                print(f'🎤 처리 중: {current_time:.1f}s ~ '
+                print(f'처리 중: {current_time:.1f}s ~ '
                       f'{current_time + actual_duration:.1f}s')
 
             try:
@@ -245,25 +245,25 @@ class AudioRecorder:
                     text = recognizer.recognize_google(
                         audio_data, language='ko-KR')
                     segments.append((current_time, text))
-                    print(f'  ✅ [{current_time:.1f}s-'
+                    print(f'  [{current_time:.1f}s-'
                           f'{current_time + actual_duration:.1f}s] {text}')
 
                 except sr.UnknownValueError:
-                    print(f'  ❌ [{current_time:.1f}s-'
+                    print(f'  [{current_time:.1f}s-'
                           f'{current_time + actual_duration:.1f}s] (인식 불가)')
                 except sr.RequestError as e:
-                    print(f'  ⚠️  [{current_time:.1f}s-'
+                    print(f'  [{current_time:.1f}s-'
                           f'{current_time + actual_duration:.1f}s] '
                           f'API 오류: {e}')
 
             except Exception as e:
-                print(f'  ❌ 오디오 처리 오류: {e}')
+                print(f'  오디오 처리 오류: {e}')
 
             current_time += actual_duration
 
         if segments:
             csv_filename = self._save_transcription(audio_file, segments)
-            print(f'\n📊 총 {len(segments)}개 구간 처리 완료')
+            print(f'\n 총 {len(segments)}개 구간 처리 완료')
             print(f"텍스트가 '{csv_filename}'에 저장되었습니다.")
             return csv_filename
         else:
