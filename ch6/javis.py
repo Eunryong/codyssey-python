@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 import speech_recognition as sr
 import csv
+import contextlib
 
 
 class AudioRecorder:
@@ -190,6 +191,18 @@ class AudioRecorder:
         except ValueError:
             print("올바른 날짜 형식이 아닙니다. (YYYY-MM-DD)")
     
+    def get_audio_duration(self, filepath):
+        """정확한 오디오 파일 길이 구하기"""
+        try:
+            with contextlib.closing(wave.open(str(filepath), 'r')) as f:
+                frames = f.getnframes()
+                rate = f.getframerate()
+                duration = frames / float(rate)
+                return duration
+        except Exception as e:
+            print(f"오디오 길이 확인 오류: {e}")
+            return None
+    
     def transcribe_audio(self, audio_file):
         print(f"\n'{audio_file}' 파일을 텍스트로 변환 중...")
         
@@ -200,42 +213,57 @@ class AudioRecorder:
             print(f"파일을 찾을 수 없습니다: {filepath}")
             return None
         
-        try:
-            with sr.AudioFile(str(filepath)) as source:
-                audio_duration = source.DURATION
-                segments = []
-                chunk_duration = 10
+        total_duration = self.get_audio_duration(filepath)
+        if total_duration is None:
+            return None
+            
+        print(f"전체 길이: {total_duration:.2f}초")
+        
+        segments = []
+        chunk_duration = 2  # 3초 단위로 변경
+        current_time = 0.0
+        
+        while current_time < total_duration:
+            remaining = total_duration - current_time
+            actual_duration = min(chunk_duration, remaining)
+            
+            # 무한루프 방지
+            if actual_duration <= 0:
+                print(f"❌ actual_duration이 {actual_duration}이므로 중단합니다.")
+                break
+            
+            print(f"🎤 처리 중: {current_time:.1f}s ~ {current_time + actual_duration:.1f}s")
+            
+            try:
+                with sr.AudioFile(str(filepath)) as source:
+                    audio_data = recognizer.record(
+                        source, 
+                        offset=current_time,
+                        duration=actual_duration
+                    )
                 
-                current_time = 0
-                while current_time < audio_duration:
-                    recognizer = sr.Recognizer()
+                try:
+                    text = recognizer.recognize_google(audio_data, language='ko-KR')
+                    segments.append((current_time, text))
+                    print(f"  ✅ [{current_time:.1f}s-{current_time + actual_duration:.1f}s] {text}")
                     
-                    with sr.AudioFile(str(filepath)) as source:
-                        source.SEEK = current_time
-                        duration = min(chunk_duration, audio_duration - current_time)
-                        audio_data = recognizer.record(source, duration=duration)
-                    
-                    try:
-                        text = recognizer.recognize_google(audio_data, language='ko-KR')
-                        segments.append((current_time, text))
-                        print(f"  [{current_time:.1f}s] {text}")
-                    except sr.UnknownValueError:
-                        print(f"  [{current_time:.1f}s] (인식 불가)")
-                    except sr.RequestError as e:
-                        print(f"  [{current_time:.1f}s] Google API 오류: {e}")
-                    
-                    current_time += chunk_duration
-                
-                if segments:
-                    csv_filename = self._save_transcription(audio_file, segments)
-                    print(f"\n텍스트가 '{csv_filename}'에 저장되었습니다.")
-                    return csv_filename
-                else:
-                    print("텍스트를 인식할 수 없습니다.")
-                    return None
-                    
-        except Exception as e:
-            print(f"오류 발생: {e}")
+                except sr.UnknownValueError:
+                    print(f"  ❌ [{current_time:.1f}s-{current_time + actual_duration:.1f}s] (인식 불가)")
+                except sr.RequestError as e:
+                    print(f"  ⚠️  [{current_time:.1f}s-{current_time + actual_duration:.1f}s] API 오류: {e}")
+            
+            except Exception as e:
+                print(f"  ❌ 오디오 처리 오류: {e}")
+            
+            current_time += actual_duration
+        
+        if segments:
+            csv_filename = self._save_transcription(audio_file, segments)
+            print(f"\n📊 총 {len(segments)}개 구간 처리 완료")
+            print(f"텍스트가 '{csv_filename}'에 저장되었습니다.")
+            return csv_filename
+        else:
+            print("텍스트를 인식할 수 없습니다.")
             return None
     
     def _save_transcription(self, audio_file, segments):
