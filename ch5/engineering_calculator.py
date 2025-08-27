@@ -623,11 +623,13 @@ class EngineeringApp(QWidget):
             self.current_input = ""
             self.just_evaluated = False
         
-        # 함수가 대기 중이면 괄호 열기
+        # 함수가 대기 중이면 괄호만 열고 숫자는 추가하지 않음
         if self.pending_function:
             self.expression += self.pending_function + "("
             self.pending_function = None
             self.current_input = ""
+            # 여기서 리턴하여 숫자가 바로 추가되지 않도록 함
+            return
         
         if number == '.':
             if self.current_input == '':
