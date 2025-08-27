@@ -1,12 +1,7 @@
-#!/usr/bin/env python3
-
 import pyaudio
 import wave
-import os
-import sys
 import threading
 from datetime import datetime, timedelta
-import time
 from pathlib import Path
 import speech_recognition as sr
 import csv
@@ -220,7 +215,7 @@ class AudioRecorder:
         print(f"전체 길이: {total_duration:.2f}초")
         
         segments = []
-        chunk_duration = 2  # 3초 단위로 변경
+        chunk_duration = 2  # 2초 단위로 변경
         current_time = 0.0
         
         while current_time < total_duration:
