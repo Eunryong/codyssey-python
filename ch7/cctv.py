@@ -19,14 +19,12 @@ class MarsImageHelper:
         self.upperbody_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_upperbody.xml')
 
     def extract_zip(self, zip_path="cctv.zip"):
-        """압축 해제 기능"""
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path, exist_ok=True)
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(self.folder_path)
         
     def load_images(self):
-        """이미지 목록 로드"""
         if os.path.exists(self.folder_path):
             valid_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp')
             self.images = []
@@ -45,27 +43,23 @@ class MarsImageHelper:
         return False
     
     def get_current_image_path(self):
-        """현재 인덱스의 이미지 경로 반환"""
         if 0 <= self.current_index < len(self.images):
             return os.path.join(self.folder_path, self.images[self.current_index])
         return None
     
     def next_image(self):
-        """다음 이미지로 이동"""
         if len(self.images) > 0:
             self.current_index = (self.current_index + 1) % len(self.images)
             return self.get_current_image_path()
         return None
     
     def prev_image(self):
-        """이전 이미지로 이동"""
         if len(self.images) > 0:
             self.current_index = (self.current_index - 1) % len(self.images)
             return self.get_current_image_path()
         return None
     
     def detect_person(self, image_path):
-        """HOG와 전신 검출기로 사람 감지 (각각 다른 색상으로 구분)"""
         if not image_path or not os.path.exists(image_path):
             return False, []
         
@@ -76,7 +70,6 @@ class MarsImageHelper:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         all_detections = []
         
-        # 1. HOG 사람 검출기 (default people detector) - 빨간색
         try:
             (rects, _) = self.hog.detectMultiScale(
                 img, 
@@ -93,7 +86,6 @@ class MarsImageHelper:
         except:
             pass
             
-        # 2. 상반신 검출기 - 파란색
         try:
             rects = self.upperbody_cascade.detectMultiScale(
                 gray,
@@ -115,7 +107,6 @@ class MarsImageHelper:
         return False, []
     
     def _create_person_template(self, width, height):
-        """간단한 사람 형태 템플릿 생성"""
         template = np.zeros((height, width), dtype=np.uint8)
         
         # 머리 (타원)
@@ -144,7 +135,6 @@ class MarsImageHelper:
         return template
     
     def _remove_overlapping_rects(self, rects, overlap_threshold=0.5):
-        """겹치는 사각형들을 제거하는 헬퍼 함수"""
         if len(rects) == 0:
             return []
             
@@ -178,34 +168,28 @@ class MarsImageHelper:
         return filtered
     
     def find_next_person_image(self):
-        """다음 이미지로 이동 (사람 감지 여부와 무관)"""
         if len(self.images) == 0:
             return None, False
         
         if self.search_index < len(self.images):
-            # search_index를 current_index에 설정하여 이미지 표시
             self.current_index = self.search_index
             image_path = self.get_current_image_path()
             has_person, detections = self.detect_person(image_path)
             
-            # 사람이 있는지 상관없이 이미진만 반환
             return image_path, detections if has_person else []
         
         return None, False
     
     def continue_search(self):
-        """사람 검색 계속하기"""
         if self.search_index < len(self.images) - 1:
             self.search_index += 1
             return self.find_next_person_image()
         return None, False
     
     def reset_search(self):
-        """검색 인덱스 초기화"""
         self.search_index = 0
     
     def get_image_info(self):
-        """현재 이미지 정보"""
         if len(self.images) > 0:
             return f"Image {self.current_index + 1} of {len(self.images)}: {self.images[self.current_index]}"
         return "No images loaded"
@@ -224,7 +208,6 @@ class CCTVViewer(QMainWindow):
         self.display_current_image()
     
     def safe_close(self):
-        """안전한 종료 처리"""
         try:
             self.close()
         except Exception as e:
@@ -233,7 +216,6 @@ class CCTVViewer(QMainWindow):
             sys.exit(0)
         
     def init_ui(self):
-        """UI 초기화"""
         self.setWindowTitle("CCTV Viewer")
         self.setGeometry(100, 100, 900, 700)
         
@@ -260,7 +242,6 @@ class CCTVViewer(QMainWindow):
         layout.addWidget(self.status_label)
         
     def display_current_image(self):
-        """현재 이미지 표시 (일반 뷰어 모드)"""
         if len(self.image_helper.images) == 0:
             self.image_label.setText("No images found in cctv folder")
             self.info_label.setText("Please check cctv.zip file")
@@ -271,7 +252,6 @@ class CCTVViewer(QMainWindow):
             self.display_image_simple(image_path)
     
     def display_image_simple(self, image_path):
-        """단순 이미지 표시 (박스 없음)"""
         if not image_path or not os.path.exists(image_path):
             self.image_label.setText("No image to display")
             self.info_label.setText("No image loaded")
@@ -296,17 +276,15 @@ class CCTVViewer(QMainWindow):
         self.info_label.setText(self.image_helper.get_image_info())
     
     def start_search(self):
-        """사람 검색 모드 시작 (현재 이미지에서 시작)"""
         self.search_mode = True
         self.search_completed = False
-        # 현재 이미지에서 검색 시작
+
         self.image_helper.search_index = self.image_helper.current_index
         self.status_label.setText("Person Search Mode - Press Enter to navigate images...")
         self.status_label.setStyleSheet("font-size: 12px; color: blue; padding: 5px;")
         self.search_for_person()
     
     def exit_search_mode(self):
-        """사람 검색 모드 종료"""
         self.search_mode = False
         self.search_completed = False
         self.current_detections = []
@@ -315,7 +293,6 @@ class CCTVViewer(QMainWindow):
         self.display_current_image()
     
     def search_for_person(self):
-        """사람 검색 실행"""
         image_path, detections = self.image_helper.find_next_person_image()
         
         if image_path:
@@ -335,7 +312,6 @@ class CCTVViewer(QMainWindow):
                                   "Search has been completed.\nNo more people found in the remaining images.")
     
     def display_image_with_boxes(self, image_path):
-        """사람 감지 박스와 함께 이미지 표시"""
         if not image_path or not os.path.exists(image_path):
             self.image_label.setText("No image to display")
             self.info_label.setText("No image loaded")
@@ -346,14 +322,13 @@ class CCTVViewer(QMainWindow):
         
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
-        # 검출기별로 다른 색상과 스타일로 표시
         for i, detection in enumerate(self.current_detections):
             x, y, w, h = detection['rect']
             color = detection['color']
             detection_type = detection['type']
             
             cv2.rectangle(img_rgb, (x, y), (x + w, y + h), color, 3)
-            # 검출기 타입 표시
+
             cv2.putText(img_rgb, detection_type, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
         
         bytes_per_line = 3 * width
@@ -370,7 +345,6 @@ class CCTVViewer(QMainWindow):
         self.info_label.setText(f"{self.image_helper.get_image_info()} - {len(self.current_detections)} person(s) detected")
     
     def keyPressEvent(self, event: QKeyEvent):
-        """키 입력 처리"""
         try:
             if self.search_mode:
                 if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
@@ -407,7 +381,6 @@ class CCTVViewer(QMainWindow):
                 self.safe_close()
         except Exception as e:
             print(f"Key event error: {e}")
-            # 에러가 발생해도 프로그램이 중단되지 않도록 처리
 
 
 def main():
